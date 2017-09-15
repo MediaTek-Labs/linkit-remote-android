@@ -387,7 +387,7 @@ public class RemoteView extends AppCompatActivity {
                         break;
                     }
                     case switchButton: {
-                        // load the slider view component
+                        // load the switch button view component
                         View switchPanel = LayoutInflater.from(getApplicationContext())
                                 .inflate(R.layout.switch_panel, null);
                         switchPanel.setBackground(loadDrawable(R.drawable.rectangle_button));
@@ -416,21 +416,26 @@ public class RemoteView extends AppCompatActivity {
                         SeekBar bar = (SeekBar)sliderPanel.findViewById(R.id.slider_bar);
                         TextView title = (TextView)sliderPanel.findViewById(R.id.slider_title);
                         TextView value = (TextView)sliderPanel.findViewById(R.id.slider_value);
+
                         bar.getThumb().setColorFilter(c.color, PorterDuff.Mode.SRC_ATOP);
                         bar.getProgressDrawable().setColorFilter(c.color, PorterDuff.Mode.SRC_ATOP);
                         title.setText(c.text);
                         title.setTypeface(title.getTypeface(), Typeface.BOLD);
                         value.setTypeface(value.getTypeface(), Typeface.BOLD);
-                        value.setText(String.valueOf(c.config.data3));
+
+                        // Note that SeekBar.setMin() is only availble after Android O
+                        // so we have to calculate our own value range and map it.
                         // bar.setMin((int)c.config.data1);
+                        final int valueRange = c.config.data2 - c.config.data1;
+                        final int mappedInitialValue = c.config.data3 - c.config.data1;
+                        bar.setMax(valueRange);
+                        value.setText(String.valueOf(mappedInitialValue));
+                        bar.setProgress(mappedInitialValue);
 
-                        bar.setTag(c);
-                        bar.setMax((int) c.config.data2);
-                        bar.setProgress((int) c.config.data3);
+                        // event handlers
                         bar.setOnSeekBarChangeListener(mEventListener);
-
+                        bar.setTag(c);
                         component = sliderPanel;
-
                         break;
                     }
                     default:
@@ -552,9 +557,9 @@ public class RemoteView extends AppCompatActivity {
         public void onProgressChanged(SeekBar var1, int var2, boolean var3){
             ControlInfo c = (ControlInfo)var1.getTag();
 
-            // update label
+            // update label, note that seekbar range is data2 - data1
             TextView valueLabel = (TextView)c.view.findViewById(R.id.slider_value);
-            valueLabel.setText(String.valueOf(var1.getProgress()));
+            valueLabel.setText(String.valueOf(c.config.data1 + var1.getProgress()));
         }
 
         public void onStartTrackingTouch(SeekBar var1) {
@@ -563,8 +568,11 @@ public class RemoteView extends AppCompatActivity {
 
         public void onStopTrackingTouch(SeekBar var1) {
             ControlInfo c = (ControlInfo)var1.getTag();
-            Log.d(TAG, "seek end = " + String.valueOf(var1.getProgress()));
-            sendRemoteEvent(c, ControlEvent.valueChange, var1.getProgress());
+            // note that seekbar stores range, and data1 is min value
+            final int seekEnd = var1.getProgress();
+            final int value = c.config.data1 + seekEnd;
+            Log.d(TAG, "seek end = " + String.valueOf(seekEnd) + "value = " + String.valueOf(value));
+            sendRemoteEvent(c, ControlEvent.valueChange, value);
         }
 
         public void onClick(View var1) {
