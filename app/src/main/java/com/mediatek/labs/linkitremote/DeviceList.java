@@ -27,6 +27,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -222,7 +223,7 @@ public class DeviceList extends AppCompatActivity {
     private void scanDevicesWithPermission() {
         if (mScanCallback != null) {
             // scanning
-            Toast.makeText(this, R.string.already_scanning, Toast.LENGTH_SHORT);
+            Toast.makeText(this, R.string.already_scanning, Toast.LENGTH_SHORT).show();
         } else {
             // build scanner and start scanning
             // Will stop the scanning after a set time.
@@ -242,12 +243,26 @@ public class DeviceList extends AppCompatActivity {
             mScanner.startScan(buildScanFilters(),
                     buildScanSettings(),
                     mScanCallback);
+
+            // Update UI
+            ProgressBar b = (ProgressBar)findViewById(R.id.scanBar);
+            b.setVisibility(View.VISIBLE);
+            b.setIndeterminate(true);
+            Toast.makeText(getApplicationContext(), R.string.scan_start_toast, Toast.LENGTH_LONG).show();
+            TextView view = (TextView) findViewById(R.id.error_textview);
+            view.setVisibility(View.INVISIBLE);
         }
     }
 
     private void stopScanning() {
         mScanner.stopScan(mScanCallback);
         mScanCallback = null;
+        ProgressBar b = (ProgressBar)findViewById(R.id.scanBar);
+        b.setVisibility(View.INVISIBLE);
+
+        if (mListAdapter.getCount() <= 0){
+            showErrorText(R.string.empty_list);
+        }
     }
 
     private void showErrorText(int messageId) {

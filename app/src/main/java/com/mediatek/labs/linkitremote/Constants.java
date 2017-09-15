@@ -11,7 +11,7 @@ class Constants {
     public static final int REQUEST_ENABLE_BT = 0xBEE0;
     public static final int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 0xBEE1;
 
-    public static final int SCAN_PERIOD_MS = 5000;
+    public static final int SCAN_PERIOD_MS = 10000;     // scan for 10 seconds
     public static final int VIEW_PADDING = 8;
 
     public static final ParcelUuid rcService = ParcelUuid.fromString("3f60ab39-1710-4456-930c-7e9c9539917e");
