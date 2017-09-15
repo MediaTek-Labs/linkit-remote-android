@@ -21,6 +21,9 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -36,6 +39,7 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.concurrent.RunnableFuture;
 
 
 public class RemoteView extends AppCompatActivity {
@@ -52,6 +56,7 @@ public class RemoteView extends AppCompatActivity {
     private ProgressBar mActivityIndicator;
     private Handler mHandler;
     private UIEventListener mEventListener;
+    private boolean mActiveDisconnect = false;
 
 
     @Override
@@ -86,8 +91,34 @@ public class RemoteView extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        clearConnection();
+        disconnectDevice();
         super.onPause();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.action_refresh:
+                disconnectDevice();
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        connectDevice();
+                    }
+                }, 10);
+
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     private void connectDevice() {
@@ -102,16 +133,21 @@ public class RemoteView extends AppCompatActivity {
             return;
         }
 
-
         mCallback = new GattCallback();
-
         mGatt = mDevice.connectGatt(getApplicationContext(),
                 false, // direct connect
                 mCallback);
 
         mActivityIndicator = (ProgressBar) findViewById(R.id.progressBar);
         mActivityIndicator.setVisibility(View.VISIBLE);
+        hideError();
+    }
 
+    private void disconnectDevice() {
+        if(mGatt != null) {
+            mActiveDisconnect = true;
+            mGatt.disconnect();
+        }
     }
 
     // cleanup resources used for BLE connection & UI views
@@ -123,10 +159,6 @@ public class RemoteView extends AppCompatActivity {
             viewGroup.removeAllViews();
         }
 
-        if(mGatt != null) {
-            mGatt.disconnect();
-        }
-
         // release resources
         mCallback = null;
         mGatt = null;
@@ -136,6 +168,28 @@ public class RemoteView extends AppCompatActivity {
         mQuery = null;
         mValues = null;
         mEventListener = null;
+
+        if(mActiveDisconnect){
+            mActiveDisconnect = false;
+        } else {
+            showError();
+        }
+
+    }
+
+    private void hideError() {
+        TextView errorText = (TextView) findViewById(R.id.errorText);
+        if (null != errorText) {
+            errorText.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private void showError() {
+        TextView errorText = (TextView) findViewById(R.id.errorText);
+        if (null != errorText) {
+            errorText.setText(R.string.device_disconnected);
+            errorText.setVisibility(View.VISIBLE);
+        }
     }
 
     // Note that these callbacks are invoked in a separate context,
@@ -163,6 +217,7 @@ public class RemoteView extends AppCompatActivity {
                     });
                     break;
                 default:
+                    Log.d(TAG, "Unhandled stat=" + String.valueOf(newState));
                     break;
             }
         }

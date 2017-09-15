@@ -9,15 +9,7 @@
     <string name="start_error_too_large">data packet exceeded 31 Byte limit.</string>
     <string name="start_error_unsupported">not supported on this device.</string>
     <string name="start_error_internal">internal error.</string>
-    <string name="start_error_too_many">too many advertisers.</string>
     <string name="bt_null">Error: Bluetooth object null</string>
-    <string name="last_seen">Last Seen:</string>
-    <string name="just_now">just now</string>
-    <string name="minute_ago">minute ago</string>
-    <string name="hour_ago">hour ago</string>
-    <string name="seconds_ago">seconds ago</string>
-    <string name="minutes_ago">minutes ago</string>
-    <string name="hours_ago">hours ago</string>
     <string name="empty_list">No devices found - refresh to try again.</string>
     <string name="seconds">seconds.</string>
     <string name="scan_start_toast">Scanning for nearby devices</string>
@@ -25,7 +17,7 @@
     <string name="scan_btn_text">Scan</string>
     <string name="no_name">(no name)</string>
     <string name="start_error_unknown">unknown error</string>
-    <string name="advertising_timedout">Advertising stopped due to timeout.</string>
+    <string name="device_disconnected">Remote device disconnected. Tap refresh to connect again.</string>
     <string name="permission_denied">Bluetooth scan permission denied - exit.</string>
 
 </resources>
