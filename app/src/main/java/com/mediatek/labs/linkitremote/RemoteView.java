@@ -30,7 +30,6 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -39,7 +38,8 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
-import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.Semaphore;
 
 
 public class RemoteView extends AppCompatActivity {
@@ -56,7 +56,11 @@ public class RemoteView extends AppCompatActivity {
     private ProgressBar mActivityIndicator;
     private Handler mHandler;
     private UIEventListener mEventListener;
+    private byte mEventSeq = 0;
     private boolean mActiveDisconnect = false;
+    private final LinkedBlockingDeque<byte[]> mWriteRequests = new LinkedBlockingDeque<>();
+    private final Semaphore mWriting = new Semaphore(1, true);
+
 
 
     @Override
@@ -139,7 +143,9 @@ public class RemoteView extends AppCompatActivity {
                 mCallback);
 
         mActivityIndicator = (ProgressBar) findViewById(R.id.progressBar);
-        mActivityIndicator.setVisibility(View.VISIBLE);
+        if(null != mActivityIndicator) {
+            mActivityIndicator.setVisibility(View.VISIBLE);
+        }
         hideError();
     }
 
@@ -172,7 +178,7 @@ public class RemoteView extends AppCompatActivity {
         if(mActiveDisconnect){
             mActiveDisconnect = false;
         } else {
-            showError();
+            showError(R.string.device_disconnected);
         }
 
     }
@@ -184,10 +190,10 @@ public class RemoteView extends AppCompatActivity {
         }
     }
 
-    private void showError() {
+    private void showError(int msg) {
         TextView errorText = (TextView) findViewById(R.id.errorText);
         if (null != errorText) {
-            errorText.setText(R.string.device_disconnected);
+            errorText.setText(msg);
             errorText.setVisibility(View.VISIBLE);
         }
     }
@@ -301,6 +307,17 @@ public class RemoteView extends AppCompatActivity {
             }
         }
 
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt,
+                                          BluetoothGattCharacteristic characteristic,
+                                          int status) {
+            if(characteristic == mEventCharacteristic) {
+                Log.d(TAG, "onWritten, status = " + String.valueOf(status));
+                mWriting.release();
+                performWriteOperation();
+            }
+        }
+
         private Drawable loadDrawable(int id){
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 return getResources().getDrawable(id, null);
@@ -316,10 +333,15 @@ public class RemoteView extends AppCompatActivity {
                 return;
             }
 
+            final RelativeLayout v = (RelativeLayout) findViewById(R.id.remote_layout);
+            if (null == v) {
+                Log.d(TAG, "root view not found!");
+                return;
+            }
+
             // Setup UI resources
             mEventListener = new UIEventListener();
 
-            final RelativeLayout v = (RelativeLayout) findViewById(R.id.remote_layout);
             final int padding = Constants.VIEW_PADDING;
             final int cw = v.getWidth() / d.col;
             final int ch = v.getHeight() / d.row;
@@ -460,6 +482,15 @@ public class RemoteView extends AppCompatActivity {
                 return null;
             }
 
+
+            // check for versions
+            BluetoothGattCharacteristic versionChar = mValues.get(Constants.rcProtocolVersion);
+            if(null == versionChar || Constants.PROTOCOL_VERSION !=
+                            versionChar.getIntValue(BluetoothGattCharacteristic.FORMAT_SINT32, 0)) {
+                showError(R.string.protocol_mismatch);
+            }
+
+
             DeviceInfo d = new DeviceInfo();
 
             d.row = mValues.get(Constants.rcRow).
@@ -518,17 +549,41 @@ public class RemoteView extends AppCompatActivity {
             return;
         }
 
-        byte[] eventData = mEventCharacteristic.getValue();
+        byte[] eventData = new byte[6];
         final int index = c.index;
 
-        eventData[index * 4] += 1;                          // sequence number - increment it
-        eventData[index * 4 + 1] = (byte)event;                       // Event
-        eventData[index * 4 + 2] = (byte)(data & 0xFF);         // Event data, high byte
-        eventData[index * 4 + 3] = (byte)((data >> 8) & 0xFF);  // Event data, low byte
+        eventData[0] = mEventSeq;                   // sequence number - increment it
+        mEventSeq += 1;
+        eventData[1] = (byte)index;                 // control index
+        eventData[2] = (byte)event;                 // event
+        eventData[3] = 0;                           // ignored & reserved
+        eventData[4] = (byte)(data & 0xFF);         // event data, high byte
+        eventData[5] = (byte)((data >> 8) & 0xFF);  // event data, low byte
 
-        mEventCharacteristic.setValue(eventData);
-        mGatt.writeCharacteristic(mEventCharacteristic);
+        mWriteRequests.add(eventData);
+        performWriteOperation();
+    }
 
+    private void performWriteOperation() {
+        if(mWriteRequests.isEmpty()){
+            Log.d(TAG, "Nothing to write");
+            return;
+        }
+
+        if(mWriting.tryAcquire()){
+            // lock acquired, start writing
+            try {
+                mEventCharacteristic.setValue(mWriteRequests.take());
+                final boolean writeInitiated = mGatt.writeCharacteristic(mEventCharacteristic);
+                Log.d(TAG, "write event " + String.valueOf(mEventSeq) + ", initiated=" + String.valueOf(writeInitiated));
+                // we'll release the mWriting lock in  "onCharacteristicWritten"
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                mWriting.release();
+            }
+        } else {
+            Log.d(TAG, "Writing - perform later");
+        }
     }
 
     private class UIEventListener implements View.OnTouchListener, SeekBar.OnSeekBarChangeListener, ToggleButton.OnClickListener {
