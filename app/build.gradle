@@ -22,9 +22,9 @@ android {
     compileSdkVersion 23
     defaultConfig {
         applicationId "com.mediatek.labs.linkitremote"
-        minSdkVersion 21
+        minSdkVersion 19
         targetSdkVersion 23
-        versionCode 5
+        versionCode 7
         versionName "1.2.20171215"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
