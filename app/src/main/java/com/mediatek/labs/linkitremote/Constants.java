@@ -14,7 +14,7 @@ class Constants {
     static final int SCAN_PERIOD_MS = 10000;     // scan for 10 seconds
     static final int VIEW_PADDING = 8;
 
-    static final int PROTOCOL_VERSION = 2;
+    static final int PROTOCOL_VERSION = 3;
 
     static final ParcelUuid rcService = ParcelUuid.fromString("3f60ab39-1710-4456-930c-7e9c9539917e");
     static final UUID rcControlCount = UUID.fromString("3f60ab39-1711-4456-930c-7e9c9539917e");
@@ -28,5 +28,6 @@ class Constants {
     static final UUID rcConfigDataArray = UUID.fromString("5d7a63ff-4155-4c7c-a348-1c0a323a6383");
     static final UUID rcOrientation = UUID.fromString("203fbbcd-9967-4eba-b0ff-0f72e5a634eb"); // 0: portrait, 1: landscape
     static final UUID rcProtocolVersion = UUID.fromString("ae73266e-65d4-4023-8868-88b070d5d576"); // protocol version, to ensure version match between arduino and mobile.
+    static final UUID rcUIUpdate = UUID.fromString("e4b1ddfe-eb37-4c78-aba8-c5fa944775cb"); // variable-length structure for UI Label text update
 
 }

@@ -32,7 +32,9 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+import android.os.SystemClock;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -51,16 +53,18 @@ public class RemoteView extends AppCompatActivity {
     private BluetoothGattService mService;
     private BluetoothGattCharacteristic mDeviceNameCharacteristic;
     private BluetoothGattCharacteristic mEventCharacteristic;
+    private BluetoothGattCharacteristic mUIUpdateCharacteristic;
     private HashSet<BluetoothGattCharacteristic> mQuery;
     private HashMap<UUID, BluetoothGattCharacteristic> mValues;
     private ProgressBar mActivityIndicator;
     private Handler mHandler;
     private UIEventListener mEventListener;
+    private DeviceInfo mDeviceInfo;
     private byte mEventSeq = 0;
     private boolean mActiveDisconnect = false;
     private final LinkedBlockingDeque<byte[]> mWriteRequests = new LinkedBlockingDeque<>();
     private final Semaphore mWriting = new Semaphore(1, true);
-
+    private long mLastSliderUpdateTime;
 
 
     @Override
@@ -171,6 +175,8 @@ public class RemoteView extends AppCompatActivity {
         mService = null;
         mDeviceNameCharacteristic = null;
         mEventCharacteristic = null;
+        mUIUpdateCharacteristic = null;
+        mDeviceInfo = null;
         mQuery = null;
         mValues = null;
         mEventListener = null;
@@ -251,6 +257,10 @@ public class RemoteView extends AppCompatActivity {
                 mValues = new HashMap<>();
                 mQuery = new HashSet<>(mService.getCharacteristics());
                 mEventCharacteristic = mService.getCharacteristic(Constants.rcEventArray);
+                mUIUpdateCharacteristic = mService.getCharacteristic(Constants.rcUIUpdate);
+                if(mUIUpdateCharacteristic != null) {
+                    gatt.setCharacteristicNotification(mUIUpdateCharacteristic, true);
+                }
 
                 for (BluetoothGattCharacteristic c : mQuery) {
                     final boolean result = gatt.readCharacteristic(c);
@@ -315,6 +325,51 @@ public class RemoteView extends AppCompatActivity {
                 Log.d(TAG, "onWritten, status = " + String.valueOf(status));
                 mWriting.release();
                 performWriteOperation();
+            }
+        }
+
+        @Override
+        // Characteristic notification
+        public void onCharacteristicChanged(BluetoothGatt gatt,
+                                            BluetoothGattCharacteristic characteristic) {
+            if(mDeviceInfo == null) {
+                return;
+            }
+
+            if(characteristic == mUIUpdateCharacteristic) {
+                Log.d(TAG, "notification received!");
+                final ByteBuffer configDataBuffer = ByteBuffer.wrap(characteristic.getValue());
+                configDataBuffer.order(ByteOrder.LITTLE_ENDIAN);
+                final byte controlIndex = configDataBuffer.get();
+                final byte dataSize = configDataBuffer.get();
+                final int headerOffset = configDataBuffer.position();
+                try {
+                    final String text = new String(characteristic.getValue(), headerOffset, dataSize - 1 , "UTF-8");
+                    Log.d(TAG, text);
+
+                    // since we're in BLE context, we need to send task to UI loop.
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            // update to corresponding UI controls, if it is a Label control
+                            if (mDeviceInfo != null) {
+                                for(ControlInfo c : mDeviceInfo.controls){
+                                    if (c.index == controlIndex && c.type == ControlInfo.ControlType.label && c.view != null) {
+                                        TextView tv = (TextView)c.view;
+                                        tv.setText(text);
+                                        tv.invalidate();
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (UnsupportedEncodingException e){
+                    Log.d(TAG, "encoding error");
+                } catch (IndexOutOfBoundsException e) {
+                    Log.d(TAG, "corrupted update info");
+                }
+
+
             }
         }
 
@@ -475,6 +530,7 @@ public class RemoteView extends AppCompatActivity {
             }
 
             mActivityIndicator.setVisibility(View.INVISIBLE);
+            mDeviceInfo = d;
         }
 
         private DeviceInfo readDeviceInfo() {
@@ -614,11 +670,21 @@ public class RemoteView extends AppCompatActivity {
 
             // update label, note that seekbar range is data2 - data1
             TextView valueLabel = (TextView)c.view.findViewById(R.id.slider_value);
-            valueLabel.setText(String.valueOf(c.config.data1 + var1.getProgress()));
+            final int value = c.config.data1 + var1.getProgress();
+            valueLabel.setText(String.valueOf(value));
+
+            // send update according to interval
+            final long EVENT_INTERVAL_MS = 100;
+            final long currentTime = SystemClock.elapsedRealtime();
+            if(currentTime - mLastSliderUpdateTime > EVENT_INTERVAL_MS) {
+                mLastSliderUpdateTime = currentTime;
+                sendRemoteEvent(c, ControlEvent.valueChange, value);
+            }
         }
 
         public void onStartTrackingTouch(SeekBar var1) {
             // do nothing, but mandatory to implement.
+            mLastSliderUpdateTime = SystemClock.elapsedRealtime();
         }
 
         public void onStopTrackingTouch(SeekBar var1) {

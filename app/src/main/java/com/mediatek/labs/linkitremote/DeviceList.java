@@ -204,7 +204,6 @@ public class DeviceList extends AppCompatActivity {
             }
             requestPermissions(permissionsList.toArray(new String[permissionsList.size()]),
                     Constants.REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS);
-            return;
         }
     }
 
@@ -225,14 +224,22 @@ public class DeviceList extends AppCompatActivity {
             // scanning
             Toast.makeText(this, R.string.already_scanning, Toast.LENGTH_SHORT).show();
         } else {
+
+            if (null == mBluetoothAdapter) {
+                // Bluetooth is not supported.
+                showErrorText(R.string.bt_not_supported);
+            }
+
             // build scanner and start scanning
             // Will stop the scanning after a set time.
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    stopScanning();
-                }
-            }, Constants.SCAN_PERIOD_MS);
+            if(mHandler != null) {
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopScanning();
+                    }
+                }, Constants.SCAN_PERIOD_MS);
+            }
 
             mScanner = mBluetoothAdapter.getBluetoothLeScanner();
 
