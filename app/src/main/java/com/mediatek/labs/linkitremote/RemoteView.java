@@ -519,11 +519,40 @@ public class RemoteView extends AppCompatActivity {
                     }
                     case joystick: {
                         // MARK: Joystick
-                        JoystickView joystick = new JoystickView(getApplicationContext());
-                        joystick.setButtonColor(c.color);
-                        joystick.setBackgroundColor(Brandcolor.grey.secondary);
-                        joystick.setButtonSizeRatio(0.6);
-                        component = joystick;
+                        JoystickView j = new JoystickView(getApplicationContext());
+
+                        j.setTag(c);
+                        j.setButtonColor(c.color);
+                        j.setBackgroundColor(Brandcolor.grey.secondary);
+                        j.setButtonSizeRatio(0.4f);
+                        j.setButtonStickToBorder(true);
+                        component = j;
+
+                        // unfortunately setOnMoveListener does not pass
+                        // the View object through the parameter.
+                        // Therefore we need to reference controlInfo (c)
+                        // from the closure. "final" is required by Java's closure.
+                        final ControlInfo cInfo = c;
+                        j.setOnMoveListener( new JoystickView.OnMoveListener() {
+                                @Override
+                                public void onMove(int angle, int strength) {
+                                    double rad = Math.toRadians(angle);
+                                    double x = Math.cos(rad) * strength * 1.28 + 127;
+                                    double y = Math.sin(rad) * strength * 1.28 + 127;
+                                    x = Math.min(x, 255);
+                                    y = Math.min(y, 255);
+                                    x = Math.max(x, 0);
+                                    y = Math.max(y, 0);
+
+                                    final int bx = (int)x;
+                                    final int by = (int)y;
+
+                                    Log.d(TAG, String.format("(%d, %d) -> (%d, %d)", angle, strength, bx, by));
+                                    int data = (bx << 8) | by;
+                                    sendRemoteEvent(cInfo, ControlEvent.valueChange, data);
+                                }
+
+                            });
                         break;
                     }
                     default:
@@ -653,7 +682,9 @@ public class RemoteView extends AppCompatActivity {
         }
     }
 
-    private class UIEventListener implements View.OnTouchListener, SeekBar.OnSeekBarChangeListener, ToggleButton.OnClickListener {
+    private class UIEventListener implements View.OnTouchListener,
+                                             SeekBar.OnSeekBarChangeListener,
+                                             ToggleButton.OnClickListener {
         public boolean onTouch(View var1, MotionEvent var2) {
             ControlInfo c = (ControlInfo)var1.getTag();
             Button b = (Button)var1;
