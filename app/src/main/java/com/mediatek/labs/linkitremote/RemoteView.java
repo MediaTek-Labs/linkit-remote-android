@@ -43,6 +43,8 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 
+import io.github.controlwear.virtual.joystick.android.*;
+
 
 public class RemoteView extends AppCompatActivity {
     static private final String TAG = "RemoteView";
@@ -513,6 +515,15 @@ public class RemoteView extends AppCompatActivity {
                         bar.setOnSeekBarChangeListener(mEventListener);
                         bar.setTag(c);
                         component = sliderPanel;
+                        break;
+                    }
+                    case joystick: {
+                        // MARK: Joystick
+                        JoystickView joystick = new JoystickView(getApplicationContext());
+                        joystick.setButtonColor(c.color);
+                        joystick.setBackgroundColor(Brandcolor.grey.secondary);
+                        joystick.setButtonSizeRatio(0.6);
+                        component = joystick;
                         break;
                     }
                     default:

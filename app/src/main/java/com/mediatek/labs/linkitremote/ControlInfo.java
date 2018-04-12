@@ -13,7 +13,8 @@ class ControlInfo {
         pushButton,
         circleButton,
         switchButton,
-        slider;
+        slider,
+        joystick;
 
         static public ControlType getEnum(byte b) {
             switch(b) {
@@ -27,6 +28,8 @@ class ControlInfo {
                     return switchButton;
                 case 5:
                     return slider;
+                case 6:
+                    return joystick;
                 default:
                     return pushButton;
             }

@@ -14,7 +14,7 @@ class Constants {
     static final int SCAN_PERIOD_MS = 10000;     // scan for 10 seconds
     static final int VIEW_PADDING = 8;
 
-    static final int PROTOCOL_VERSION = 3;
+    static final int PROTOCOL_VERSION = 4;
 
     static final ParcelUuid rcService = ParcelUuid.fromString("3f60ab39-1710-4456-930c-7e9c9539917e");
     static final UUID rcControlCount = UUID.fromString("3f60ab39-1711-4456-930c-7e9c9539917e");
