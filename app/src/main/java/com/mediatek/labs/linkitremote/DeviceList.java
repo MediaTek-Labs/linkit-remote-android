@@ -30,6 +30,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.net.Uri;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -109,6 +110,9 @@ public class DeviceList extends AppCompatActivity {
             case R.id.action_refresh:
                 scanDevices();
                 return true;
+            case R.id.action_help:
+                Uri uri = Uri.parse(getResources().getString((R.string.app_info_url)));
+                startActivity( new Intent( Intent.ACTION_VIEW, uri ) );
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -241,15 +245,28 @@ public class DeviceList extends AppCompatActivity {
                 }, Constants.SCAN_PERIOD_MS);
             }
 
-            mScanner = mBluetoothAdapter.getBluetoothLeScanner();
+            try {
+                mScanner = mBluetoothAdapter.getBluetoothLeScanner();
 
-            Log.d(TAG, "create scancallback");
-            mScanCallback = new SampleScanCallback();
-            Log.d(TAG, "create scancallback done");
+                if (null == mScanner) {
+                    // Bluetooth is not supported.
+                    showErrorText(R.string.bt_not_supported);
+                    return;
+                }
 
-            mScanner.startScan(buildScanFilters(),
-                    buildScanSettings(),
-                    mScanCallback);
+                Log.d(TAG, "create scancallback");
+                mScanCallback = new SampleScanCallback();
+                Log.d(TAG, "create scancallback done");
+
+                mScanner.startScan(buildScanFilters(),
+                        buildScanSettings(),
+                        mScanCallback);
+            } catch (java.lang.Exception e) {
+                Log.e(TAG, "exception", e);
+                showErrorText(R.string.bt_not_supported);
+                return;
+            }
+
 
             // Update UI
             ProgressBar b = (ProgressBar)findViewById(R.id.scanBar);

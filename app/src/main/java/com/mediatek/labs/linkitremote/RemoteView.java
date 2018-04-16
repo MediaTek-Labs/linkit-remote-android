@@ -33,6 +33,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.os.SystemClock;
+import android.net.Uri;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -126,6 +127,9 @@ public class RemoteView extends AppCompatActivity {
                 }, 10);
 
                 return true;
+            case R.id.action_help:
+                Uri uri = Uri.parse(getResources().getString((R.string.app_info_url)));
+                startActivity( new Intent( Intent.ACTION_VIEW, uri ) );
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -524,9 +528,10 @@ public class RemoteView extends AppCompatActivity {
                         j.setTag(c);
                         j.setButtonColor(c.color);
                         j.setBackgroundColor(Brandcolor.grey.secondary);
-                        j.setButtonSizeRatio(0.4f);
-                        j.setButtonStickToBorder(true);
-                        component = j;
+                        final float thumbSize = 0.3f;
+                        final float bgSize = 1.0f - thumbSize;
+                        j.setButtonSizeRatio(thumbSize);
+                        j.setBackgroundSizeRatio(bgSize);
 
                         // unfortunately setOnMoveListener does not pass
                         // the View object through the parameter.
@@ -537,22 +542,25 @@ public class RemoteView extends AppCompatActivity {
                                 @Override
                                 public void onMove(int angle, int strength) {
                                     double rad = Math.toRadians(angle);
-                                    double x = Math.cos(rad) * strength * 1.28 + 127;
-                                    double y = Math.sin(rad) * strength * 1.28 + 127;
-                                    x = Math.min(x, 255);
-                                    y = Math.min(y, 255);
-                                    x = Math.max(x, 0);
-                                    y = Math.max(y, 0);
+                                    double x = Math.cos(rad) * strength * 1;
+                                    double y = Math.sin(rad) * strength * 1;
+                                    x = Math.min(x, 100);
+                                    y = Math.min(y, 100);
+                                    x = Math.max(x, -100);
+                                    y = Math.max(y, -100);
 
                                     final int bx = (int)x;
                                     final int by = (int)y;
 
                                     Log.d(TAG, String.format("(%d, %d) -> (%d, %d)", angle, strength, bx, by));
-                                    int data = (bx << 8) | by;
+                                    int data = (bx << 8) | (by & 0xFF);
                                     sendRemoteEvent(cInfo, ControlEvent.valueChange, data);
                                 }
 
                             });
+
+                        // assign to component
+                        component = j;
                         break;
                     }
                     default:

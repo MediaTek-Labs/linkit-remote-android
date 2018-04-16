@@ -2,7 +2,7 @@
     <string name="app_name">LinkIt Remote</string>
     <string name="bt_not_enabled_leaving">User declined to enable Bluetooth, exiting app.</string>
     <string name="activity_main_title">Nearby Devices</string>
-    <string name="bt_not_supported">Bluetooth is not supported on this device.</string>
+    <string name="bt_not_supported">Bluetooth LE is not supported on this device.</string>
     <string name="refresh">Refresh</string>
     <string name="start_error_prefix">Start Advertising failed: </string>
     <string name="start_error_already_started">already started.</string>
@@ -20,5 +20,5 @@
     <string name="device_disconnected">Remote device disconnected. Tap refresh to connect again.</string>
     <string name="protocol_mismatch">Incompatible LRemote version. Please upgrade to version v0.9.6 or later.</string>
     <string name="permission_denied">Bluetooth scan permission denied - exit.</string>
-
+    <string name="app_info_url">https://docs.labs.mediatek.com/resource/linkit7697-arduino/en/developer-guide/using-linkit-remote</string>
 </resources>
