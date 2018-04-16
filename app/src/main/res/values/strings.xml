@@ -21,4 +21,9 @@
     <string name="protocol_mismatch">Incompatible LRemote version. Please upgrade to version v0.9.6 or later.</string>
     <string name="permission_denied">Bluetooth scan permission denied - exit.</string>
     <string name="app_info_url">https://docs.labs.mediatek.com/resource/linkit7697-arduino/en/developer-guide/using-linkit-remote</string>
+    <string name="enable_location_service">Please enable [Bluetooth] and [GPS/Location] in the Settings app</string>
+    <string name="need_setting">Settings Required</string>
+    <string name="setting_app">Launch Settings</string>
+
+
 </resources>

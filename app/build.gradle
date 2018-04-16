@@ -24,8 +24,8 @@ android {
         applicationId "com.mediatek.labs.linkitremote"
         minSdkVersion 19
         targetSdkVersion 23
-        versionCode 7
-        versionName "1.2.20171215"
+        versionCode 9
+        versionName "1.3.20180416"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

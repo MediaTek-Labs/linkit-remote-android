@@ -2,6 +2,7 @@ package com.mediatek.labs.linkitremote;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.location.LocationManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -11,6 +12,7 @@ import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -229,9 +231,29 @@ public class DeviceList extends AppCompatActivity {
             Toast.makeText(this, R.string.already_scanning, Toast.LENGTH_SHORT).show();
         } else {
 
+            boolean needSetting = false;
+
             if (null == mBluetoothAdapter) {
                 // Bluetooth is not supported.
                 showErrorText(R.string.bt_not_supported);
+                needSetting = true;
+            }
+
+            try {
+                LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+                boolean gps_enabled = false;
+                gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+                if(!gps_enabled) {
+                    needSetting = true;
+                }
+            } catch(Exception ex) {
+                // BLE scanner requires location service
+                needSetting = true;
+            }
+
+            if(needSetting){
+                showErrorDialog(R.string.enable_location_service);
+                return;
             }
 
             // build scanner and start scanning
@@ -294,6 +316,22 @@ public class DeviceList extends AppCompatActivity {
         view.setText(getString(messageId));
         view.setVisibility(View.VISIBLE);
     }
+
+    private void showErrorDialog(int messageId) {
+        AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(this);
+        dlgAlert.setMessage(getString(messageId));
+        dlgAlert.setTitle(getString(R.string.need_setting));
+        dlgAlert.setPositiveButton(getString(R.string.setting_app),
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        startActivityForResult(new Intent(android.provider.Settings.ACTION_SETTINGS), 0);
+                    }
+                });
+        dlgAlert.setCancelable(true);
+        dlgAlert.create().show();
+
+    }
+
 
     /**
      * Return a List of {@link ScanFilter} objects to filter by Service UUID.
