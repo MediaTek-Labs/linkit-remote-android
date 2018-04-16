@@ -539,6 +539,7 @@ public class RemoteView extends AppCompatActivity {
                         // from the closure. "final" is required by Java's closure.
                         final ControlInfo cInfo = c;
                         j.setOnMoveListener( new JoystickView.OnMoveListener() {
+                                long mLastSentTime = SystemClock.elapsedRealtime();
                                 @Override
                                 public void onMove(int angle, int strength) {
                                     double rad = Math.toRadians(angle);
@@ -554,7 +555,18 @@ public class RemoteView extends AppCompatActivity {
 
                                     Log.d(TAG, String.format("(%d, %d) -> (%d, %d)", angle, strength, bx, by));
                                     int data = (bx << 8) | (by & 0xFF);
-                                    sendRemoteEvent(cInfo, ControlEvent.valueChange, data);
+
+                                    // data = 0 (joystick centered) -> always send
+                                    // others -> send every 100ms
+                                    boolean shouldSend = (data == 0) ||
+                                            ((SystemClock.elapsedRealtime() - mLastSentTime) > 100);
+
+                                    if(shouldSend) {
+                                        sendRemoteEvent(cInfo, ControlEvent.valueChange, data);
+                                        mLastSentTime = SystemClock.elapsedRealtime();
+                                    } else {
+                                        Log.d(TAG, "joystick event dropped");
+                                    }
                                 }
 
                             });
