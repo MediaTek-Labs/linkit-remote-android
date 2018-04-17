@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">LinkIt Remote</string>
+    <string name="bt_not_enabled_leaving">無法存取藍牙功能，將結束程式。</string>
+    <string name="activity_main_title">鄰近裝置</string>
+    <string name="bt_not_supported">此裝置不支援低功耗藍牙</string>
+    <string name="refresh">重新掃描</string>
+    <string name="start_error_prefix">廣播失敗</string>
+    <string name="start_error_already_started">已經開始廣播</string>
+    <string name="start_error_too_large">封包大小過大</string>
+    <string name="start_error_unsupported">此裝置無法支援</string>
+    <string name="start_error_internal">應用程式內部錯誤</string>
+    <string name="bt_null">錯誤：沒有藍牙裝置</string>
+    <string name="empty_list">無可用裝置—請重新掃描</string>
+    <string name="seconds">秒</string>
+    <string name="scan_start_toast">正在掃描鄰近裝置</string>
+    <string name="already_scanning">已經開始掃描</string>
+    <string name="scan_btn_text">掃描</string>
+    <string name="no_name">（無名稱）</string>
+    <string name="start_error_unknown">未知的錯誤</string>
+    <string name="device_disconnected">遠端裝置離線點按「重新掃描」可重新連接</string>
+    <string name="protocol_mismatch">請升級您的 LinkIt 7697 Arduino 包</string>
+    <string name="permission_denied">無法開始掃描藍牙，退出程式</string>
+    <string name="app_info_url">https://docs.labs.mediatek.com/resource/linkit7697-arduino/en/developer-guide/using-linkit-remote</string>
+    <string name="enable_location_service">請啟用「藍牙」以及「定位服務」</string>
+    <string name="need_setting">更改系統設定</string>
+    <string name="setting_app">前往設定</string>
+</resources>
