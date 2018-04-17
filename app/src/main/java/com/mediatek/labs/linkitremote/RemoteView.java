@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
@@ -392,6 +393,12 @@ public class RemoteView extends AppCompatActivity {
             if (null == d) {
                 Log.d(TAG, "cannot load device info!");
                 return;
+            }
+
+            if(d.isLandscape) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            } else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
             }
 
             final RelativeLayout v = (RelativeLayout) findViewById(R.id.remote_layout);
