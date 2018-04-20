@@ -232,11 +232,16 @@ public class DeviceList extends AppCompatActivity {
         } else {
 
             boolean needSetting = false;
+            if (null == mBluetoothAdapter) {
+                mBluetoothAdapter = ((BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+                Log.d(TAG, "mBluetoothAdapter reinitialized");
+            }
 
             if (null == mBluetoothAdapter) {
                 // Bluetooth is not supported.
                 showErrorText(R.string.bt_not_supported);
                 needSetting = true;
+                Log.d(TAG, "mBluetoothAdapter reinitialize failed");
             }
 
             try {
@@ -244,11 +249,14 @@ public class DeviceList extends AppCompatActivity {
                 boolean gps_enabled = false;
                 gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
                 if(!gps_enabled) {
+                    Log.d(TAG, "no GPS available");
                     needSetting = true;
                 }
             } catch(Exception ex) {
                 // BLE scanner requires location service
+                Log.d(TAG, "excetpion", ex);
                 needSetting = true;
+                throw ex;
             }
 
             if(needSetting){
